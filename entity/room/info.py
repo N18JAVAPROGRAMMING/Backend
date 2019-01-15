@@ -1,11 +1,10 @@
 import MySQLdb
-import json
 
 
 def info(connection):
-    try:
-        with connection.cursor() as cursor:
-            sql = "SELECT id, on_start, capacity, room_name, peer_count FROM ROOMS"
+    with connection.cursor() as cursor:
+        try:
+            sql = "SELECT id, on_start, capacity, room_name, peer_count FROM rooms"
             cursor.execute(sql)
             data = []
             for row in cursor.fetchall():
@@ -14,6 +13,7 @@ def info(connection):
                              "capacity": row[2],
                              "room_name": row[3],
                              "peer_count": row[4]})
+            cursor.close()
             return data
-    except MySQLdb.Error:
-        return False
+        except MySQLdb.Error:
+            return False
