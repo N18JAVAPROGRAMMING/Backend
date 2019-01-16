@@ -1,10 +1,12 @@
 import MySQLdb
+from src.token import exists
 
 
-def info(connection):
-    with connection.cursor() as cursor:
+def info(connection, token):
+    if exists(connection, token):
         try:
-            sql = "SELECT id, on_start, capacity, room_name, peer_count FROM rooms"
+            cursor = connection.cursor()
+            sql = "SELECT id, on_start, capacity, room_name, peer_count FROM rooms WHERE is_over = 0"
             cursor.execute(sql)
             data = []
             for row in cursor.fetchall():
@@ -17,3 +19,5 @@ def info(connection):
             return data
         except MySQLdb.Error:
             return False
+    else:
+        return False

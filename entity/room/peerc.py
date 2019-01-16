@@ -1,14 +1,16 @@
 import MySQLdb
+from src.token import get_username
 
 
-def connect_peer(connection, room_id, peer_name):
-    cursor = connection.cursor()
-    sql = "SELECT id, capacity, peer_count, peer_list FROM ROOMS WHERE id=%s"
-    try:
-        cursor.execute(sql, (str(room_id),))
-        row = cursor.fetchone()
-        if row[1] - row[2] >= 1:
-            try:
+def connect_peer(connection, token, room_id):
+    peer_name = get_username(connection, token)
+    if type(peer_name) == str:
+        try:
+            cursor = connection.cursor()
+            sql = "SELECT id, capacity, peer_count, peer_list FROM ROOMS WHERE id=%s"
+            cursor.execute(sql, (str(room_id),))
+            row = cursor.fetchone()
+            if row[1] - row[2] >= 1:
                 sql = "UPDATE rooms SET peer_count=%s, peer_list=%s WHERE id =%s"
                 cursor.execute(sql, (str(row[2] + 1),
                                      row[3] + ";" + str(peer_name),
@@ -18,9 +20,9 @@ def connect_peer(connection, room_id, peer_name):
                     return {"status": "success", "prepared": "no"}
                 else:
                     return {"status": "success", "prepared": "yes"}
-            except MySQLdb.Error:
+            else:
                 return False
-        else:
+        except MySQLdb.Error:
             return False
-    except MySQLdb.Error:
+    else:
         return False
