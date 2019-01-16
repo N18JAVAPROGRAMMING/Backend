@@ -3,6 +3,7 @@ import json
 from flask import Flask, request
 
 import entity.room.info
+import entity.room.status
 import entity.room.create
 import entity.room.peerc
 import entity.room.peerdc
@@ -29,6 +30,20 @@ def room_list():
     if type(data) == list:
         return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
     else:
+        return json.dumps({"status": "failed"}), 500
+
+
+@app.route('/room/status', methods=['GET'])
+def status():
+    try:
+        data = entity.room.status.status(connection,
+                                         request.args.get("token"),
+                                         request.args.get("room_id"))
+        if type(data) == dict:
+            return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
+        else:
+            return json.dumps({"status": "failed"}), 500
+    except KeyError:
         return json.dumps({"status": "failed"}), 500
 
 
