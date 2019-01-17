@@ -65,45 +65,44 @@ def task_get():
 def room_create():
     data = request.get_json()
     try:
-        if entity.room.create.create(connection, data['token'],
-                                     data['capacity'], data['room_name']):
-            return json.dumps({"status": "success"}), 200
+        room_id = entity.room.create.create(connection, data['token'], data['capacity'],
+                                            data['room_name'], data['domino_amt'])
+        if type(room_id) == int:
+            return json.dumps({"status": room_id}), 200
         else:
             return json.dumps({"status": "failed"}), 500
-    except KeyError:
+    except:
         return json.dumps({"status": "failed"}), 500
 
 
 @app.route('/room/connect', methods=['POST'])
 def peer_connect():
     try:
-        data = entity.room.peerc.connect_peer(connection,
-                                              request.get_json()['token'],
-                                              request.get_json()['room_id'])
+        data = entity.room.peerc.connect_peer(connection, request.get_json()['token'], request.get_json()['room_id'])
         if type(data) == dict:
             return json.dumps(data), 200
         else:
             return json.dumps({"status": "failed"}), 500
-    except KeyError:
+    except:
         return json.dumps({"status": "failed"}), 500
 
 
 @app.route('/room/disconnect', methods=['POST'])
 def peer_disconnect():
     try:
-        if entity.room.peerdc.disconnect_peer(connection,
-                                              request.get_json()['token'],
-                                              request.get_json()['room_id']):
+        if entity.room.peerdc.disconnect_peer(connection, request.get_json()['token'], request.get_json()['room_id']):
             return json.dumps({"status": "success"}), 200
         else:
             return json.dumps({"status": "failed"}), 500
-    except KeyError:
+    except:
         return json.dumps({"status": "failed"}), 500
 
 
 @app.route('/room/start', methods=['POST'])
 def room_start():
-    data = entity.room.start.start(connection, request.get_json()['room_id'])
+    data = entity.room.start.start(connection,
+                                   request.get_json()['token'],
+                                   request.get_json()['room_id'])
     try:
         if type(data) == dict:
             return json.dumps(data), 200
