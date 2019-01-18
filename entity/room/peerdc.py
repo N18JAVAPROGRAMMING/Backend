@@ -1,4 +1,3 @@
-import MySQLdb
 from src.token import get_username
 
 
@@ -6,7 +5,7 @@ def disconnect_peer(connection, token, room_id):
     peer_name = get_username(connection, token)
     if type(peer_name) == str:
         cursor = connection.cursor()
-        sql = "SELECT id, capacity, peer_count, peer_list FROM ROOMS WHERE id=%s"
+        sql = "SELECT id, capacity, peer_count, peer_list FROM rooms WHERE id=%s"
         cursor.execute(sql, (str(room_id),))
         row = cursor.fetchone()
         if row[2] > 1:

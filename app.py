@@ -7,10 +7,10 @@ import entity.room.status
 import entity.room.create
 import entity.room.peerc
 import entity.room.peerdc
-import entity.room.start
 import entity.peer.signup
 import entity.peer.login
 import entity.game.gettask
+import entity.game.dependencies
 
 app = Flask(__name__)
 connection = MySQLdb.connect(host="localhost",
@@ -26,10 +26,13 @@ connection.query('SET GLOBAL interactive_timeout=28800')
 
 @app.route('/room/info', methods=['GET'])
 def room_list():
-    data = entity.room.info.info(connection, request.args.get("token"))
-    if type(data) == list:
-        return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
-    else:
+    try:
+        data = entity.room.info.info(connection, request.args.get("token"))
+        if type(data) == list:
+            return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
+        else:
+            return json.dumps({"status": "failed"}), 500
+    except:
         return json.dumps({"status": "failed"}), 500
 
 
@@ -43,7 +46,7 @@ def status():
             return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
         else:
             return json.dumps({"status": "failed"}), 500
-    except KeyError:
+    except:
         return json.dumps({"status": "failed"}), 500
 
 
@@ -57,7 +60,21 @@ def task_get():
             return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
         else:
             return json.dumps({"status": "failed"}), 500
-    except KeyError:
+    except:
+        return json.dumps({"status": "failed"}), 500
+
+
+@app.route('/game/dependencies', methods=['GET'])
+def domino_task():
+    try:
+        data = entity.game.dependencies.domino_task(connection,
+                                                    request.args.get("token"),
+                                                    request.args.get("room_id"))
+        if type(data) == dict:
+            return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
+        else:
+            return json.dumps({"status": "failed"}), 500
+    except:
         return json.dumps({"status": "failed"}), 500
 
 
@@ -66,9 +83,11 @@ def room_create():
     data = request.get_json()
     try:
         room_id = entity.room.create.create(connection, data['token'], data['capacity'],
-                                            data['room_name'], data['domino_amt'])
+                                            data['room_name'], int(data['domino_amt']))
         if type(room_id) == int:
-            return json.dumps({"status": room_id}), 200
+            data = entity.room.status.status(connection, data['token'], room_id)
+            data["id"] = room_id
+            return json.dumps(data), 200
         else:
             return json.dumps({"status": "failed"}), 500
     except:
@@ -78,9 +97,10 @@ def room_create():
 @app.route('/room/connect', methods=['POST'])
 def peer_connect():
     try:
-        data = entity.room.peerc.connect_peer(connection, request.get_json()['token'], request.get_json()['room_id'])
-        if type(data) == dict:
-            return json.dumps(data), 200
+        data = request.get_json()
+        response = entity.room.peerc.connect_peer(connection, data['token'], data['room_id'])
+        if type(response) == dict:
+            return json.dumps(entity.room.status.status(connection, data['token'], data['room_id'])), 200
         else:
             return json.dumps({"status": "failed"}), 500
     except:
@@ -90,25 +110,13 @@ def peer_connect():
 @app.route('/room/disconnect', methods=['POST'])
 def peer_disconnect():
     try:
-        if entity.room.peerdc.disconnect_peer(connection, request.get_json()['token'], request.get_json()['room_id']):
-            return json.dumps({"status": "success"}), 200
+        data = request.get_json()
+        if entity.room.peerdc.disconnect_peer(connection, data['token'], data['room_id']):
+            response = entity.room.info.info(connection, data['token'])
+            return json.dumps(response), 200
         else:
             return json.dumps({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
-
-
-@app.route('/room/start', methods=['POST'])
-def room_start():
-    data = entity.room.start.start(connection,
-                                   request.get_json()['token'],
-                                   request.get_json()['room_id'])
-    try:
-        if type(data) == dict:
-            return json.dumps(data), 200
-        else:
-            return json.dumps({"status": "failed"}), 500
-    except KeyError:
         return json.dumps({"status": "failed"}), 500
 
 
@@ -122,7 +130,7 @@ def sign_up():
             return json.dumps({"status": "success", "token": data}), 200
         else:
             return json.dumps({"status": "failed"}), 500
-    except KeyError:
+    except:
         return json.dumps({"status": "failed"}), 500
 
 
@@ -136,7 +144,7 @@ def sign_in():
             return json.dumps({"status": "success", "token": data}), 200
         else:
             return json.dumps({"status": "failed"}), 500
-    except KeyError:
+    except:
         return json.dumps({"status": "failed"}), 500
 
 
