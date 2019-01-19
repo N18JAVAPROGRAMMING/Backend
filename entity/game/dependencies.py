@@ -9,10 +9,7 @@ def domino_task(connection, token,  room_id):
         response = cursor.fetchall()
         data = {}
         for w in response:
-            sql = "SELECT lower_value, upper_value FROM dominoes WHERE id = %s"
-            cursor.execute(sql, (w[0],))
-            data['|'.join(str(i) for i in cursor.fetchall()[0])] = w[1]
-
+            data[w[0]] = w[1]
         return data
 
     else:

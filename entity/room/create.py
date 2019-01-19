@@ -23,9 +23,9 @@ def create(connection, token, capacity, room_name, domino_amt):
     if type(initiator) == str:
 
         cursor = connection.cursor()
-        sql = "INSERT INTO rooms (on_start, capacity, room_name, peer_count, peer_list, domino_amt, is_over) " \
-              "VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, (str(0), capacity, room_name, str(1), initiator, domino_amt, str(0)))
+        sql = "INSERT INTO rooms (on_start, capacity, room_name, peer_list, domino_amt, is_over) " \
+              "VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(sql, (str(0), capacity, room_name, initiator, domino_amt, str(0)))
         room_id = connection.insert_id()
 
         sql = "SELECT id, complexity FROM tasks"
@@ -38,8 +38,6 @@ def create(connection, token, capacity, room_name, domino_amt):
         data_dominoes = sample(cursor.fetchall(), domino_amt)
         data_dominoes.sort(key=dominoes_sort)
 
-        
-
         for w in range(domino_amt):
             sql = "INSERT INTO room_task (room_id, domino_id, task_id, is_solved) VALUES (%s, %s, %s, %s)"
             cursor.execute(sql, (room_id, data_dominoes[w][0], data_tasks[w][0], str(0)))
@@ -47,7 +45,6 @@ def create(connection, token, capacity, room_name, domino_amt):
         connection.commit()
         cursor.close()
         return room_id
-
 
     else:
         return False
