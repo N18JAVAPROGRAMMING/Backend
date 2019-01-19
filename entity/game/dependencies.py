@@ -7,7 +7,6 @@ def domino_task(connection, token,  room_id):
         sql = "SELECT domino_id, task_id FROM room_task WHERE room_id = %s"
         cursor.execute(sql, (room_id,))
         response = cursor.fetchall()
-        print(response)
         data = {}
         for w in response:
             sql = "SELECT lower_value, upper_value FROM dominoes WHERE id = %s"

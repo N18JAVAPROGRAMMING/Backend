@@ -1,6 +1,5 @@
 import MySQLdb
-import json
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 import entity.room.info
 import entity.room.status
@@ -11,6 +10,7 @@ import entity.peer.signup
 import entity.peer.login
 import entity.game.gettask
 import entity.game.dependencies
+import src.token
 
 app = Flask(__name__)
 connection = MySQLdb.connect(host="localhost",
@@ -29,11 +29,22 @@ def room_list():
     try:
         data = entity.room.info.info(connection, request.args.get("token"))
         if type(data) == list:
-            return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
+            return jsonify(data), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
+
+
+@app.route('/token/check', methods=['GET'])
+def token_exists():
+    try:
+        if src.token.exists(connection, request.args.get("token")):
+            return jsonify({"status": "success"}), 200
+        else:
+            return jsonify({"status": "failed"}), 500
+    except:
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/room/status', methods=['GET'])
@@ -43,11 +54,11 @@ def status():
                                          request.args.get("token"),
                                          request.args.get("room_id"))
         if type(data) == dict:
-            return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
+            return jsonify(data), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/game/get-task', methods=['GET'])
@@ -57,11 +68,11 @@ def task_get():
                                        request.args.get("token"),
                                        request.args.get("task_id"))
         if type(data) == dict:
-            return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
+            return jsonify(data), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/game/dependencies', methods=['GET'])
@@ -71,11 +82,11 @@ def domino_task():
                                                     request.args.get("token"),
                                                     request.args.get("room_id"))
         if type(data) == dict:
-            return json.dumps(data, ensure_ascii=False).encode('utf8'), 200
+            return jsonify(data), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/room/create', methods=['POST'])
@@ -87,11 +98,11 @@ def room_create():
         if type(room_id) == int:
             data = entity.room.status.status(connection, data['token'], room_id)
             data["id"] = room_id
-            return json.dumps(data), 200
+            return jsonify(data), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/room/connect', methods=['POST'])
@@ -100,11 +111,11 @@ def peer_connect():
         data = request.get_json()
         response = entity.room.peerc.connect_peer(connection, data['token'], data['room_id'])
         if type(response) == dict:
-            return json.dumps(entity.room.status.status(connection, data['token'], data['room_id'])), 200
+            return jsonify(entity.room.status.status(connection, data['token'], data['room_id'])), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/room/disconnect', methods=['POST'])
@@ -113,11 +124,11 @@ def peer_disconnect():
         data = request.get_json()
         if entity.room.peerdc.disconnect_peer(connection, data['token'], data['room_id']):
             response = entity.room.info.info(connection, data['token'])
-            return json.dumps(response), 200
+            return jsonify(response), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/peer/signup', methods=['POST'])
@@ -127,11 +138,11 @@ def sign_up():
                                           request.get_json()['username'],
                                           request.get_json()['password'])
         if type(data) == str:
-            return json.dumps({"status": "success", "token": data}), 200
+            return jsonify({"token": data}), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/peer/login', methods=['POST'])
@@ -141,12 +152,12 @@ def sign_in():
                                          request.get_json()['username'],
                                          request.get_json()['password'])
         if type(data) == str:
-            return json.dumps({"status": "success", "token": data}), 200
+            return jsonify({"token": data}), 200
         else:
-            return json.dumps({"status": "failed"}), 500
+            return jsonify({"status": "failed"}), 500
     except:
-        return json.dumps({"status": "failed"}), 500
+        return jsonify({"status": "failed"}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port="80")
