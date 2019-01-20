@@ -39,8 +39,9 @@ def create(connection, token, capacity, room_name, domino_amt):
         data_dominoes.sort(key=dominoes_sort)
 
         for w in range(domino_amt):
-            sql = "INSERT INTO room_task (room_id, domino_id, task_id, is_solved) VALUES (%s, %s, %s, %s)"
-            cursor.execute(sql, (room_id, data_dominoes[w][0], data_tasks[w][0], str(0)))
+            sql = "INSERT INTO room_task (room_id, domino_id, task_id, available, resolved, non_resolved, is_solved) " \
+                  "VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            cursor.execute(sql, (room_id, data_dominoes[w][0], data_tasks[w][0], 1, 0, 0, 0))
 
         connection.commit()
         cursor.close()
