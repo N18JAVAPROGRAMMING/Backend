@@ -1,6 +1,7 @@
 import MySQLdb
 from flask import Flask, request, jsonify
 
+import conn
 import entity.room.info
 import entity.room.status
 import entity.room.create
@@ -9,18 +10,14 @@ import entity.room.peerdc
 import entity.peer.signup
 import entity.peer.login
 import entity.peer.get_score
-import entity.game.get_task
+import entity.game.domino
 import entity.game.dependencies
 import entity.game.localscore
 import src.token
 
 app = Flask(__name__)
-connection = MySQLdb.connect(host="localhost",
-                             user="root",
-                             passwd="",
-                             db="task_list",
-                             charset='utf8')
 
+connection = conn.DB()
 connection.query('SET GLOBAL connect_timeout=28800')
 connection.query('SET GLOBAL wait_timeout=28800')
 connection.query('SET GLOBAL interactive_timeout=28800')
@@ -73,21 +70,8 @@ def peer_score():
             return jsonify(data), 200
         else:
             return jsonify({"status": "failed"}), 500
-    except:
-        return jsonify({"status": "failed"}), 500
-
-
-@app.route('/game/get-task', methods=['GET'])
-def task_get():
-    try:
-        data = entity.game.get_task.get(connection,
-                                        request.args.get("token"),
-                                        request.args.get("task_id"))
-        if type(data) == dict:
-            return jsonify(data), 200
-        else:
-            return jsonify({"status": "failed"}), 500
-    except:
+    except Exception as ex:
+        print(ex)
         return jsonify({"status": "failed"}), 500
 
 
@@ -105,23 +89,39 @@ def domino_task():
         return jsonify({"status": "failed"}), 500
 
 
+@app.route('/game/domino', methods=['POST'])
+def domino_capture():
+    try:
+        data = entity.game.domino.capture(connection,
+                                          request.get_json()["token"],
+                                          request.get_json()["task_id"])
+        if type(data) == dict:
+            return jsonify(data), 200
+        else:
+            return jsonify({"status": "failed"}), 500
+    except Exception as ex:
+        print(ex)
+        return jsonify({"status": "failed"}), 500
+
+
 @app.route('/game/score', methods=['POST'])
 def add_local_score():
     try:
         data = request.get_json()
-        if entity.game.localscore.add(connection, data["token"],
-                                      int(data["amt"]), str(data["method"])):
+        if entity.game.localscore.add(connection, data["token"], int(data["amt"]),
+                                      str(data["method"]), data["task_id"]):
             return jsonify({"status": "success"}), 200
         else:
             return jsonify({"status": "failed"}), 500
-    except:
+    except Exception as ex:
+        print(ex)
         return jsonify({"status": "failed"}), 500
 
 
 @app.route('/room/create', methods=['POST'])
 def room_create():
-    data = request.get_json()
-    try:
+        data = request.get_json()
+
         room_id = entity.room.create.create(connection, data['token'], data['capacity'],
                                             data['room_name'], int(data['domino_amt']))
         if type(room_id) == int:
@@ -130,8 +130,7 @@ def room_create():
             return jsonify(data), 200
         else:
             return jsonify({"status": "failed"}), 500
-    except:
-        return jsonify({"status": "failed"}), 500
+
 
 
 @app.route('/room/connect', methods=['POST'])
@@ -143,7 +142,8 @@ def peer_connect():
             return jsonify(entity.room.status.status(connection, data['token'], data['room_id'])), 200
         else:
             return jsonify({"status": "failed"}), 500
-    except:
+    except Exception as ex:
+        print(ex)
         return jsonify({"status": "failed"}), 500
 
 
@@ -184,9 +184,10 @@ def sign_in():
             return jsonify({"token": data}), 200
         else:
             return jsonify({"status": "failed"}), 500
-    except:
+    except Exception as ex:
+        print(ex)
         return jsonify({"status": "failed"}), 500
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port="80")
+    app.run(host="0.0.0.0", port="5000")

@@ -22,29 +22,31 @@ def create(connection, token, capacity, room_name, domino_amt):
 
     if type(initiator) == str:
 
-        cursor = connection.cursor()
         sql = "INSERT INTO rooms (on_start, capacity, room_name, peer_list, domino_amt, is_over) " \
               "VALUES (%s, %s, %s, %s, %s, %s)"
-        cursor.execute(sql, (str(0), capacity, room_name, initiator, domino_amt, str(0)))
-        room_id = connection.insert_id()
+        cur = connection.query(sql, (str(0), capacity, room_name, initiator, domino_amt, str(0)))
+        room_id = connection.conn.insert_id()
+        connection.commit()
+        cur.close()
 
         sql = "SELECT id, complexity FROM tasks"
-        cursor.execute(sql)
-        data_tasks = sample(cursor.fetchall(), domino_amt)
+        cur = connection.query(sql)
+        data_tasks = sample(cur.fetchall(), domino_amt)
         data_tasks.sort(key=tasks_sort)
+        cur.close()
 
         sql = "SELECT * FROM dominoes"
-        cursor.execute(sql)
-        data_dominoes = sample(cursor.fetchall(), domino_amt)
+        cur = connection.query(sql)
+        data_dominoes = sample(cur.fetchall(), domino_amt)
         data_dominoes.sort(key=dominoes_sort)
+        cur.close()
 
         for w in range(domino_amt):
-            sql = "INSERT INTO room_task (room_id, domino_id, task_id, available, resolved, non_resolved, is_solved) " \
+            sql = "INSERT INTO room_task (room_id, domino_id, task_id, captured, solved, non_solved, is_solved) " \
                   "VALUES (%s, %s, %s, %s, %s, %s, %s)"
-            cursor.execute(sql, (room_id, data_dominoes[w][0], data_tasks[w][0], 1, 0, 0, 0))
-
-        connection.commit()
-        cursor.close()
+            cur = connection.query(sql, (room_id, data_dominoes[w][0], data_tasks[w][0], 0, 0, 0, 0))
+            connection.commit()
+            cur.close()
         return room_id
 
     else:

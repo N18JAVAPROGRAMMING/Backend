@@ -1,9 +1,8 @@
 def exists(connection, token):
-    cursor = connection.cursor()
     sql = "SELECT EXISTS(SELECT token FROM users WHERE token = %s)"
-    cursor.execute(sql, (token,))
-    response = cursor.fetchone()[0]
-    cursor.close()
+    cur = connection.query(sql, (token,))
+    response = cur.fetchone()[0]
+    cur.close()
     if response == 1:
         return True
     else:
@@ -11,11 +10,10 @@ def exists(connection, token):
 
 
 def get_username(connection, token):
-    cursor = connection.cursor()
     sql = "SELECT username FROM users WHERE token = %s"
-    cursor.execute(sql, (token,))
-    response = cursor.fetchall()[0]
-    cursor.close()
+    cur = connection.query(sql, (token,))
+    response = cur.fetchall()[0]
+    cur.close()
     if len(response) == 1:
         return response[0]
     else:

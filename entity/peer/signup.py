@@ -2,10 +2,9 @@ import secrets
 
 
 def sign_up(connection, username, passwd):
-    cursor = connection.cursor()
-    sql = "INSERT INTO users (username, password, token) VALUES (%s, %s, %s)"
+    sql = "INSERT INTO users (username, password, token, score) VALUES (%s, %s, %s, %s)"
     token = secrets.token_urlsafe(16)
-    cursor.execute(sql, (username, passwd, token))
+    cur = connection.query(sql, (username, passwd, token, 0))
     connection.commit()
-    cursor.close()
+    cur.close()
     return token
