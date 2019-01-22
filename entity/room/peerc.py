@@ -20,7 +20,7 @@ def connect_peer(connection, token, room_id):
                 cur.close()
                 return {"prepared": "no"}
             else:
-                sql = "UPDATE rooms SET time_start = %s WHERE id = %s"
+                sql = "UPDATE rooms SET on_start = 1, time_start = %s WHERE id = %s"
                 cur = connection.query(sql, (int(time()), room_id))
                 cur.close()
                 for w in peer_list.split(";"):

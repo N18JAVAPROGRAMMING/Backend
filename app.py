@@ -13,6 +13,9 @@ import entity.peer.get_score
 import entity.game.domino
 import entity.game.dependencies
 import entity.game.localscore
+import entity.game.task
+import entity.game.users
+import entity.game.over
 import src.token
 
 app = Flask(__name__)
@@ -89,6 +92,45 @@ def domino_task():
         return jsonify({"status": "failed"}), 500
 
 
+@app.route('/game/task', methods=['GET'])
+def task_check():
+    try:
+        data = entity.game.task.check(connection,
+                                      request.args.get("token"),
+                                      request.args.get("room_id"))
+        if type(data) == dict:
+            return jsonify(data), 200
+        else:
+            return jsonify({"status": "failed"}), 500
+    except:
+        return jsonify({"status": "failed"}), 500
+
+
+@app.route('/users/info', methods=['GET'])
+def turnir_table():
+    try:
+        data = entity.game.users.info(connection, request.args.get("token"), request.args.get("room_id"))
+        if type(data) == dict:
+            return jsonify(data), 200
+        else:
+            return jsonify({"status": "failed"}), 500
+    except Exception as ex:
+        print(ex)
+        return jsonify({"status": "failed"}), 500
+
+
+@app.route('/game/over', methods=['GET'])
+def is_over():
+    try:
+        if entity.game.over.over(connection, request.args.get("token"), request.args.get("room_id")):
+            return jsonify({"status": "success"}), 200
+        else:
+            return jsonify({"status": "failed"}), 500
+    except Exception as ex:
+        print(ex)
+        return jsonify({"status": "failed"}), 500
+
+
 @app.route('/game/domino', methods=['POST'])
 def domino_capture():
     try:
@@ -108,8 +150,7 @@ def domino_capture():
 def add_local_score():
     try:
         data = request.get_json()
-        if entity.game.localscore.add(connection, data["token"], int(data["amt"]),
-                                      str(data["method"]), data["task_id"]):
+        if entity.game.localscore.add(connection, data["token"], int(data["amt"]), data["task_id"]):
             return jsonify({"status": "success"}), 200
         else:
             return jsonify({"status": "failed"}), 500
@@ -120,6 +161,7 @@ def add_local_score():
 
 @app.route('/room/create', methods=['POST'])
 def room_create():
+    try:
         data = request.get_json()
 
         room_id = entity.room.create.create(connection, data['token'], data['capacity'],
@@ -130,7 +172,9 @@ def room_create():
             return jsonify(data), 200
         else:
             return jsonify({"status": "failed"}), 500
-
+    except Exception as ex:
+        print(ex)
+        return jsonify({"status": "failed"}), 500
 
 
 @app.route('/room/connect', methods=['POST'])
@@ -190,4 +234,4 @@ def sign_in():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port="5000")
+    app.run(host="0.0.0.0", port="80")
